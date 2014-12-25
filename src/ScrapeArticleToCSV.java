@@ -9,13 +9,14 @@ import com.csvreader.CsvWriter;
 
 
 public class ScrapeArticleToCSV{
-	public static void main(String[] args) {
+	public static void main(String[] args){
 		//Take a HTTP url as input
 		Scanner inp = new Scanner(System.in);
 		String outputFile = "sentences.csv";
 		System.out.print("Enter a url for a news article: ");
 		String link_target = inp.next();
-		List<String> text = Fetcher.pullAndExtract(link_target);
+		
+		List<String> text = Fetcher.pullAndExtract(link_target); 
 		InputStream modelInput = null;
 		SentenceModel model;
 		try{
@@ -30,9 +31,10 @@ public class ScrapeArticleToCSV{
 				sentences.add(sentenceDetector.sentDetect(text.get(i)));
 			}
 
+			//Write sentences into CSV format
 			CsvWriter csvOutput = new CsvWriter(new FileWriter(outputFile, true), ',');
 			for (int i=0; i < sentences.size(); i++){
-				for(int j = 0; j < sentences.get(i).length; j++){
+				for(int j=0; j < sentences.get(i).length; j++){
 					// System.out.println(sentences.get(i)[j]);  // For debugging
 					csvOutput.write(sentences.get(i)[j]);
 					csvOutput.endRecord();  // new line
@@ -41,16 +43,16 @@ public class ScrapeArticleToCSV{
 			csvOutput.close();
 		}
 		catch (IOException e) {
-		  e.printStackTrace();
+		 	e.printStackTrace();
 		}
 		finally {
-		  if (modelInput != null) {
-			try {
-			  modelInput.close();
-			}
+		  	if (modelInput != null) {
+				try {
+			  		modelInput.close();
+				}
 			catch (IOException e) {
-			}
-		  }
+				}
+		  	}
 		}
 		
 	}
