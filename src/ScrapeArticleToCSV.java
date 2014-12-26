@@ -45,19 +45,20 @@ public class ScrapeArticleToCSV{
 			System.out.println("Sentence detector not created.");
 			}
 		else{
-			System.out.println(". detected. Stopping program");
+			System.out.println(". detected. Output written to file sentences.csv");
 		}
 	}
 
-	public static SentenceDetectorME createSentenceDetector(){
+	private static SentenceDetectorME createSentenceDetector(){
 	/* Creates a sentence detector object with method sentDetect. sentDetect 
 	detects sentences in an input stream. Returns null if something goes wrong.
 	*/
+	    System.out.println("Created SentenceDetector");
 		try{
 			InputStream modelInput = new FileInputStream("en-sent.bin");
 			SentenceModel model = new SentenceModel(modelInput);
 			SentenceDetectorME newSentenceDetector = new SentenceDetectorME(model);
-			System.out.println("Created SentenceDetector");
+			
 			modelInput.close();
 			return newSentenceDetector;
 		}
@@ -67,7 +68,7 @@ public class ScrapeArticleToCSV{
 		return null;
 	}
 
-	public static void writeCsvFile(String filename, List<String[]> content){
+	private static void writeCsvFile(String filename, List<String[]> content){
 	/* Takes in a list of String arrays CONTENT and writes to FILENAME 
 	*/
 		CsvWriter csvOutput = null;
