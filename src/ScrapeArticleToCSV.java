@@ -10,13 +10,11 @@ import com.csvreader.CsvWriter;
 
 public class ScrapeArticleToCSV{
 	public static void main(String[] args){
-		//Take a HTTP url as input
+		//Take HTTP url as inputs
 		Scanner inp = new Scanner(System.in);
 		String outputFile = "sentences.csv";
 		String link_target = "";
 		List<String> text; 
-		InputStream modelInput = null;
-		SentenceModel model = null;
 		SentenceDetectorME sentenceDetector = null;
 		List<String[]> sentences = new ArrayList<String[]>();
 
@@ -25,55 +23,73 @@ public class ScrapeArticleToCSV{
 			link_target = inp.next();
 			if (link_target.equals("."))
 				break;
-			try{
-				//Creates a model for sentence detector
-				if (modelInput == null){
-					modelInput = new FileInputStream("en-sent.bin");
-					model = new SentenceModel(modelInput);
-					sentenceDetector = new SentenceDetectorME(model);
-					System.out.println("initilized modelInput");
+			
+			//Creates a model for sentence detector if needed
+			if (sentenceDetector == null){
+				sentenceDetector = createSentenceDetector();
+				if (sentenceDetector == null){
+					break;
 				}
+			}
 
-				//Stores article into a List of string arrays, with each array a sentence
-				text = Fetcher.pullAndExtract(link_target);
-				for (int i=0;i<text.size();i++){
-					sentences.add(sentenceDetector.sentDetect(text.get(i)));
-				}
-				sentences.add(sentenceDetector.sentDetect("Next Article.")); // Seperates each article in output file
+			//Stores article into a List of string arrays, with each array a sentence
+			text = Fetcher.pullAndExtract(link_target);
+			for (int i=0;i<text.size();i++){
+				sentences.add(sentenceDetector.sentDetect(text.get(i)));
 			}
-			catch (IOException e) {
-			 	e.printStackTrace();
-			}
-			finally {
-			  	if (modelInput != null) {
-					try {
-				  		modelInput.close();
-					}
-				catch (IOException e) {
-					}
-			  	}
-			}
-		}
-		
+			sentences.add(sentenceDetector.sentDetect("-----End of article.")); //Seperates each article in output file
+		}		
 		//Write sentences into CSV format
+		writeCsvFile(outputFile, sentences);
+		if (sentenceDetector == null){
+			System.out.println("Sentence detector not created.");
+			}
+		else{
+			System.out.println(". detected. Stopping program");
+		}
+	}
+
+	public static SentenceDetectorME createSentenceDetector(){
+	/* Creates a sentence detector object with method sentDetect. sentDetect 
+	detects sentences in an input stream. Returns null if something goes wrong.
+	*/
 		try{
-			CsvWriter csvOutput = new CsvWriter(new FileWriter(outputFile, true), ',');
-			for (int i=0; i < sentences.size(); i++){
-				for(int j=0; j < sentences.get(i).length; j++){
+			InputStream modelInput = new FileInputStream("en-sent.bin");
+			SentenceModel model = new SentenceModel(modelInput);
+			SentenceDetectorME newSentenceDetector = new SentenceDetectorME(model);
+			System.out.println("Created SentenceDetector");
+			modelInput.close();
+			return newSentenceDetector;
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+			}
+		return null;
+	}
+
+	public static void writeCsvFile(String filename, List<String[]> content){
+	/* Takes in a list of String arrays CONTENT and writes to FILENAME 
+	*/
+		CsvWriter csvOutput = null;
+		try{
+			csvOutput = new CsvWriter(new FileWriter(filename, true), ',');
+			for (int i=0; i < content.size(); i++){
+				for(int j=0; j < content.get(i).length; j++){
 					// System.out.println(sentences.get(i)[j]);  // For debugging
-					csvOutput.write(sentences.get(i)[j]);
+					csvOutput.write(content.get(i)[j]);
 					csvOutput.endRecord();  // new line
 				}
 			}
-			csvOutput.close();
-			System.out.println(". detected. Stopping program");
 		}
 		catch (IOException e) {
-			 	e.printStackTrace();
+			e.printStackTrace();
 			}
-		
+		finally{
+			if (csvOutput != null) {
+		  		csvOutput.close();
+		  	}		
+		}
 	}
-
 	
 
 }
