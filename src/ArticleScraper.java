@@ -7,46 +7,56 @@ import opennlp.tools.sentdetect.SentenceModel;
 
 import com.csvreader.CsvWriter;
 
+public class ArticleScraper{
+	private boolean multiple_urls;
+	private List<String> input_urls;
+	private String input_url;
+	private static String outputFile;
+	private static SentenceDetectorME sentenceDetector = null;
+	private static List<String> text; 
+	private static List<String[]> sentences = new ArrayList<String[]>();
 
-public class ScrapeArticleToCSV{
-	public static void main(String[] args){
-		//Take HTTP url as inputs
-		Scanner inp = new Scanner(System.in);
-		String outputFile = "sentences.csv";
-		String link_target = "";
-		List<String> text; 
-		SentenceDetectorME sentenceDetector = null;
-		List<String[]> sentences = new ArrayList<String[]>();
+	public ArticleScraper(String name, String url){
+		outputFile = name;
+		input_url = url;
+		multiple_urls = false;
+		
+	}
 
-		while (true){
-			System.out.print("Enter an url for a news article. Enter . to stop: ");
-			link_target = inp.next();
-			if (link_target.equals("."))
-				break;
-			
-			//Creates a model for sentence detector if needed
-			if (sentenceDetector == null){
-				sentenceDetector = createSentenceDetector();
-				if (sentenceDetector == null){
-					break;
-				}
-			}
+	public ArticleScraper(String name, List<String> urls){
+		outputFile = name;
+		input_urls = urls;
+		multiple_urls = true;
+		
+	}
 
-			//Stores article into a List of string arrays, with each array a sentence
-			text = Fetcher.pullAndExtract(link_target);
-			for (int i=0;i<text.size();i++){
-				sentences.add(sentenceDetector.sentDetect(text.get(i)));
-			}
-			sentences.add(sentenceDetector.sentDetect("-----End of article.")); //Seperates each article in output file
-		}		
-		//Write sentences into CSV format
-		writeCsvFile(outputFile, sentences);
+	public static void scrapeArticles(ArticleScraper x){
+	/* Static method that takes ArticleScraper objects and write to designated
+	CSV output file.
+	*/
 		if (sentenceDetector == null){
-			System.out.println("Sentence detector not created.");
-			}
-		else{
-			System.out.println(". detected. Output written to file sentences.csv");
+			sentenceDetector = createSentenceDetector();
 		}
+		if (x.multiple_urls == false){
+			text = Fetcher.pullAndExtract(x.input_url);
+			parseSentences(text);
+		}
+		else{
+			for(int i=0; i < x.input_urls.size();i++){
+				text = Fetcher.pullAndExtract(x.input_urls.get(i));
+				parseSentences(text);
+			}
+		}
+		writeCsvFile(outputFile, sentences);
+		//After writing out to file, reset sentences to empty.
+		sentences.clear();  
+	}
+
+	public static void parseSentences(List<String> article){
+		for (int i=0;i<article.size();i++){
+			sentences.add(sentenceDetector.sentDetect(text.get(i)));
+		}
+		sentences.add(sentenceDetector.sentDetect("-----End of article."));
 	}
 
 	private static SentenceDetectorME createSentenceDetector(){
